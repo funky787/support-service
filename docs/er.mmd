@@ -1,0 +1,6 @@
+erDiagram
+    CATEGORIES ||--o{ TICKETS : has
+    TICKETS ||--o{ STATUS_HISTORY : records
+    CATEGORIES { bigint id PK string name }
+    TICKETS { bigint id PK string title string description bigint category_id FK string priority string status timestamp created_at timestamp due_at timestamp closed_at }
+    STATUS_HISTORY { bigint id PK bigint ticket_id FK string old_status string new_status timestamp changed_at }

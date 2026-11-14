@@ -1,0 +1,5 @@
+flowchart LR
+    A[Создать заявку NEW] --> B[Взять в работу IN_PROGRESS]
+    B --> C[Решить RESOLVED]
+    A --> D[Отменить CANCELLED]
+    B --> D

@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-support_db}
+      POSTGRES_USER: ${POSTGRES_USER:-support}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    volumes:
+      - support_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+  app:
+    build: .
+    image: ${APP_IMAGE:-support-service:${IMAGE_TAG:-local}}
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-support_db}
+      DB_USERNAME: ${POSTGRES_USER:-support}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      PORT: 8080
+    ports:
+      - "${PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/actuator/health/readiness > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+    restart: unless-stopped
+volumes:
+  support_pgdata:

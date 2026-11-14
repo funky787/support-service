@@ -1,0 +1,32 @@
+### Categories
+GET http://localhost:8080/api/categories
+
+### Create
+POST http://localhost:8080/api/tickets
+Content-Type: application/json
+
+{"title":"Не работает принтер","description":"Кабинет 12","categoryId":2,"priority":"HIGH","dueAt":"2027-01-01T12:00:00Z"}
+
+### Read
+GET http://localhost:8080/api/tickets/1
+
+### Filter
+GET http://localhost:8080/api/tickets?priority=HIGH&page=0&size=10
+
+### Edit
+PUT http://localhost:8080/api/tickets/1
+Content-Type: application/json
+
+{"description":"Проверить драйвер","priority":"MEDIUM","dueAt":null}
+
+### Change status
+PATCH http://localhost:8080/api/tickets/1/status
+Content-Type: application/json
+
+{"status":"IN_PROGRESS"}
+
+### History
+GET http://localhost:8080/api/tickets/1/history
+
+### Kotlin report
+GET http://localhost:8080/api/reports/summary?from=2026-01-01T00:00:00Z&to=2028-01-01T00:00:00Z
