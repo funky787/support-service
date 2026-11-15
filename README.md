@@ -12,9 +12,9 @@ REST API для работы с заявками в техподдержку.
 
 Проще всего запустить через Docker.
 
-В PowerShell:
 
-```powershell
+
+```
 Copy-Item .env.example .env
 docker compose up --build -d
 ```
@@ -31,7 +31,7 @@ http://localhost:8080/swagger-ui/index.html
 
 Запуск:
 
-```powershell
+```
 .\gradlew.bat clean check jacocoTestReport
 ```
 
