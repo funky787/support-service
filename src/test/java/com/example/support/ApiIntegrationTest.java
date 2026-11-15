@@ -75,4 +75,16 @@ class ApiIntegrationTest {
         mvc.perform(get("/api/tickets/" + id)).andExpect(jsonPath("$.status", is("NEW")));
         mvc.perform(get("/api/tickets/" + id + "/history")).andExpect(jsonPath("$.length()", is(0)));
     }
+
+    @Test
+    void ticketWithoutDeadlineIsNotOverdue() throws Exception {
+        String id = create();
+
+        mvc.perform(get("/api/tickets")
+                        .param("overdue", "false")
+                        .param("size", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].id",
+                        hasItem(Integer.parseInt(id))));
+    }
 }
