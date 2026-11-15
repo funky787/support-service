@@ -49,34 +49,32 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.image }}
+
   deploy:
     needs: publish
-    if: vars.DEPLOY_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: [ self-hosted, Linux, X64 ]
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
-      - name: Copy deploy files to stand
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: compose.deploy.yaml,scripts/deploy.sh
-          target: /opt/support-service
-      - name: Deploy and smoke test
-        uses: appleboy/ssh-action@v1.0.3
+
+      - name: Deploy on Ubuntu
         env:
-          REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
-          IMAGE_TAG: ${{ github.sha }}
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: REGISTRY_IMAGE,IMAGE_TAG,GHCR_USER,GHCR_TOKEN
-          script: |
-            set -e
-            cd /opt/support-service
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            bash scripts/deploy.sh
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          install -m 644 compose.deploy.yaml /opt/support-service/compose.deploy.yaml
+          install -D -m 755 scripts/deploy.sh /opt/support-service/scripts/deploy.sh
+
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+
+          export REGISTRY_IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          export IMAGE_TAG="$GITHUB_SHA"
+
+          cd /opt/support-service
+          bash scripts/deploy.sh
+  
