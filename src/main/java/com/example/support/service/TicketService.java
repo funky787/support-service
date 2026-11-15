@@ -85,7 +85,7 @@ public class TicketService {
             spec = spec.and((root, query, cb) -> {
                 var late = cb.and(cb.lessThan(root.<Instant>get("dueAt"), now),
                     root.get("status").in(TicketStatus.NEW, TicketStatus.IN_PROGRESS));
-                return overdue ? late : cb.not(late);
+                return overdue ? late : cb.or(cb.isNull(root.get("dueAt")), cb.not(late));
             });
         }
         return tickets.findAll(spec, pageable).map(TicketResponse::from);
