@@ -1,10 +1,16 @@
 package com.example.support.service
 
-import com.example.support.model.*
+import com.example.support.model.Priority
+import com.example.support.model.Ticket
+import com.example.support.model.TicketStatus
 import com.example.support.repository.TicketRepository
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.`when`
 import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
 import java.time.Instant
@@ -23,10 +29,12 @@ class ReportServiceTest {
         assertEquals(0, result.created)
         assertNull(result.averageResolutionSeconds)
     }
+
     @Test fun invalidPeriodIs400() {
         assertEquals(400, assertThrows(ResponseStatusException::class.java) { service.summary(to, from) }.statusCode.value())
         verifyNoInteractions(repo)
     }
+
     @Test fun javaEntityIsIncludedInStatistics() {
         val javaTicket = Ticket("Printer", null, null, Priority.HIGH, from.minusSeconds(10), clock)
         `when`(repo.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to)).thenReturn(listOf(javaTicket))
@@ -37,6 +45,7 @@ class ReportServiceTest {
         assertEquals(1, result.overdueOpen)
         assertNull(result.averageResolutionSeconds)
     }
+
     @Test fun resolvedDurationUsesClosedAt() {
         val t = Ticket("Printer", null, null, Priority.LOW, null, clock)
         t.changeStatus(TicketStatus.IN_PROGRESS, clock)
@@ -44,6 +53,7 @@ class ReportServiceTest {
         `when`(repo.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to)).thenReturn(listOf(t))
         assertEquals(7200.0, service.summary(from, to).averageResolutionSeconds)
     }
+
     @Test fun noResolvedTicketsHaveNullAverage() {
         val t = Ticket("Printer", null, null, Priority.LOW, null, clock)
         `when`(repo.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(from, to)).thenReturn(listOf(t))

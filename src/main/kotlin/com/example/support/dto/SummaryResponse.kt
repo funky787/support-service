@@ -8,5 +8,5 @@ data class SummaryResponse(
     val byStatus: Map<TicketStatus, Int>,
     val byPriority: Map<Priority, Int>,
     val overdueOpen: Int,
-    val averageResolutionSeconds: Double?
+    val averageResolutionSeconds: Double?,
 )

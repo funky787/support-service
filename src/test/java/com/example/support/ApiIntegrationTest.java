@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import java.time.Instant;
 
 @SpringBootTest @AutoConfigureMockMvc @Testcontainers
 class ApiIntegrationTest {
@@ -59,15 +60,43 @@ class ApiIntegrationTest {
         mvc.perform(get("/api/tickets/" + id + "/history"))
             .andExpect(status().isOk()).andExpect(jsonPath("$[0].newStatus", is("IN_PROGRESS")));
     }
-    @Test void lifecycleEndsWithResolvedAndKotlinReport() throws Exception {
+
+    @Test
+    void lifecycleEndsWithResolvedAndKotlinReport() throws Exception {
         String id = create();
-        mvc.perform(patch("/api/tickets/" + id + "/status").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"status\":\"IN_PROGRESS\"}")).andExpect(status().isOk());
-        mvc.perform(patch("/api/tickets/" + id + "/status").contentType(MediaType.APPLICATION_JSON)
-            .content("{\"status\":\"RESOLVED\"}")).andExpect(status().isOk());
-        mvc.perform(get("/api/reports/summary").param("from", "2020-01-01T00:00:00Z").param("to", "2030-01-01T00:00:00Z"))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.byStatus.RESOLVED", greaterThanOrEqualTo(1)));
+
+        mvc.perform(patch("/api/tickets/" + id + "/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"IN_PROGRESS\"}"))
+                .andExpect(status().isOk());
+
+        mvc.perform(patch("/api/tickets/" + id + "/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"RESOLVED\"}"))
+                .andExpect(status().isOk());
+
+        String json = mvc.perform(get("/api/tickets/" + id))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Instant createdAt = Instant.parse(
+                new com.fasterxml.jackson.databind.ObjectMapper()
+                        .readTree(json)
+                        .get("createdAt")
+                        .asText()
+        );
+
+        mvc.perform(get("/api/reports/summary")
+                        .param("from", createdAt.minusSeconds(60).toString())
+                        .param("to", createdAt.plusSeconds(60).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.byStatus.RESOLVED",
+                        greaterThanOrEqualTo(1)));
     }
+
+
     @Test void forbiddenOperationKeepsStateAndHistory() throws Exception {
         String id = create();
         mvc.perform(patch("/api/tickets/" + id + "/status").contentType(MediaType.APPLICATION_JSON)

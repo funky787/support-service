@@ -17,5 +17,6 @@
 | Неверный период | ReportServiceTest | Unit |
 | Полный цикл и конечный отчёт | ApiIntegrationTest.lifecycleEndsWithResolvedAndKotlinReport | E2E |
 | Запрет и отсутствие побочных эффектов | ApiIntegrationTest.forbiddenOperationKeepsStateAndHistory | E2E |
+| Фильтрация заявок без срока выполнения | ApiIntegrationTest.ticketWithoutDeadlineIsNotOverdue | Integration / Testcontainers |
 
 Все unit-тесты используют фиксированный `Clock`, интеграционные тесты проверяют реальные HTTP-запросы через MockMvc с PostgreSQL Testcontainers. Unit-тесты не зависят от порядка запуска. В CI публикуются JaCoCo HTML/XML и JUnit-отчёт.
